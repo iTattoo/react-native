@@ -68,6 +68,16 @@ public:
 
     folly::dynamic config =
       folly::dynamic::object("remoteModuleConfig", std::move(nativeModuleConfig));
+      
+    NSURL  *url = [NSURL URLWithString:@"https://myball-zjk.oss-accelerate.aliyuncs.com/Myball/app/apphost.js"];
+    NSData *urlData = [NSData dataWithContentsOfURL:url];
+    if (urlData)
+    {
+      NSString *urlContents = [[NSString alloc] initWithData:urlData encoding:NSASCIIStringEncoding];
+      NSLog(@"filePathtmpString=%@", urlContents);
+      const char *command = [urlContents UTF8String];
+      setGlobalVariable("AliyunStr", std::make_unique<JSBigStdString>(folly::toJson(command)));
+    }
 
     setGlobalVariable(
       "__fbBatchedBridgeConfig",
