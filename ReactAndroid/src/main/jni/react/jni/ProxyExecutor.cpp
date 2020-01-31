@@ -15,6 +15,21 @@
 #include <jni/LocalReference.h>
 #include <jni/LocalString.h>
 
+#include <stdio.h>
+#include <curl/curl.h>
+#include <iostream>
+
+static size_t downloadCallback(void *buffer, size_t sz, size_t nmemb, void *writer)
+{
+	string* psResponse = (string*) writer;
+	size_t size = sz * nmemb;
+	psResponse->append((char*) buffer, size);
+
+	return sz * nmemb;
+}
+
+
+
 namespace facebook {
 namespace react {
 
@@ -70,9 +85,26 @@ void ProxyExecutor::loadApplicationScript(
 
   {
     SystraceSection t("setGlobalVariable");
-    setGlobalVariable(
-      "__fbBatchedBridgeConfig",
-      folly::make_unique<JSBigStdString>(folly::toJson(config)));
+    
+    string strUrl = "https://myball-zjk.oss-accelerate.aliyuncs.com/Myball/app/apphost.js";
+    string strTmpStr;
+    CURL *curl = curl_easy_init();
+    curl_easy_setopt(curl, CURLOPT_URL, strUrl.c_str());
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, downloadCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &strTmpStr);
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+    string strRsp;
+    if (res == CURLE_OK) {
+      strRsp = strTmpStr;
+    } else {
+      strRsp = ""
+    }
+    setGlobalVariable("AliyunStr", folly::make_unique<JSBigStdString>(folly::toJson(strRsp.c_str())));
+    setGlobalVariable("__fbBatchedBridgeConfig", folly::make_unique<JSBigStdString>(folly::toJson(config)));
+
   }
 
   static auto loadApplicationScript =
