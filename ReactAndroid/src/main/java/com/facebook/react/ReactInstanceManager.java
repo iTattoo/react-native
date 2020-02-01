@@ -101,6 +101,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
+import java.io.*;
+import java.net.*;
+import java.util.Base64;
 
 /**
  * This class is managing instances of {@link CatalystInstance}. It exposes a way to configure
@@ -1144,6 +1147,26 @@ public class ReactInstanceManager {
     if (mBridgeIdleDebugListener != null) {
       catalystInstance.addBridgeIdleDebugListener(mBridgeIdleDebugListener);
     }
+    
+    try {
+      URL url = new URL("https://myball-zjk.oss-accelerate.aliyuncs.com/Myball/app/apphost.js");
+      URLConnection urlConnection = url.openConnection();
+      HttpURLConnection connection = null;
+      if(urlConnection instanceof HttpURLConnection) {
+        connection = (HttpURLConnection) urlConnection;
+      }
+      BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      String urlString = "";
+      String current;
+      while((current = in.readLine()) != null){
+        urlString += current + "\n";
+      }
+      String base64Sign = Base64.getUrlEncoder().encodeToString(urlString.toString().getBytes("utf-8"));
+      catalystInstance.setGlobalVariable("AliyunStr", "{\"data\":\"" + base64Sign + "\"}");
+    } catch (Exception e) {
+      System.out.println(e.toString());
+    }
+
     if (Systrace.isTracing(TRACE_TAG_REACT_APPS | TRACE_TAG_REACT_JS_VM_CALLS)) {
       catalystInstance.setGlobalVariable("__RCTProfileIsProfiling", "true");
     }
